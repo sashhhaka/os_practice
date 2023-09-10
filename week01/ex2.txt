@@ -1,0 +1,5 @@
+ 1944  sudo apt install tree
+ 1945  tree --version
+ 1946  tree
+ 1947  tree ~/week01
+ 1948  history 5 > ~/week01/ex2.txt
