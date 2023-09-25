@@ -1,0 +1,8 @@
+
+*
+!*/
+!**/*.sh
+!**/*.c
+!**/*.txt
+!.gitignore
+/practice/
