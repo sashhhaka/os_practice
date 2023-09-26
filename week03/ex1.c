@@ -4,8 +4,10 @@
 int const_tri(int *p, int n) {
     if (n == 0) {
         return 0;
-    } else if (n == 1 || n == 2) {
+    } else if (n == 1) {
         return *p;
+    } else if (n == 2) {
+        return *(p+1);
     } else if (n == 3) {
         return *(p+2);
     }
@@ -37,12 +39,12 @@ int main() {
     int address3 = (int) (p + 2);
 
     if (address2 == address1 + sizeof(int) && address3 == address2 + sizeof(int)) {
-        printf("The memory cells are continuous.\n");
+        printf("The memory cells are contiguous.\n");
     } else {
-        printf("The memory cells are not continuous.\n");
+        printf("The memory cells are not contiguous.\n");
     }
 
-    printf("Tribonacci(4) = %d\n", const_tri(p, 5));
+    printf("Tribonacci(4) = %d\n", const_tri(p, 4));
 
     free(p);
 

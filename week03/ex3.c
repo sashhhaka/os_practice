@@ -4,12 +4,13 @@
 #define MAX_LENGTH_NAME 63
 #define MAX_LENGTH_DATA 2048
 #define MAX_PATH 1024
+#define UNSIGNED_CHAR_MAX 255
 
 struct File;
 struct Directory;
 
 struct File {
-    long id;
+    unsigned long long id;
     char name[MAX_LENGTH_NAME + 1];
     int size;
     char data[MAX_LENGTH_DATA];
@@ -18,8 +19,8 @@ struct File {
 
 struct Directory {
     char name[MAX_LENGTH_NAME + 1];
-    struct File *files[MAX_LENGTH_DATA + 1];
-    struct Directory *subdirectories[MAX_LENGTH_DATA + 1];
+    struct File *files[UNSIGNED_CHAR_MAX + 1];
+    struct Directory *subdirectories[UNSIGNED_CHAR_MAX + 1];
     unsigned char nf, nd;
     char path[MAX_PATH];
 };
