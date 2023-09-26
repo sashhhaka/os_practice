@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
+#include <limits.h>
 
 void* aggregate(void* base, size_t size, int n, void* initialValue, void* (*opr)(const void*, const void*)) {
     char* basePtr = (char*)base;
     void* result = initialValue;
+    void* pre_result;
 
     for (int i = 0; i < n; i++) {
+        pre_result = result;
         result = opr(result, basePtr);
         basePtr += size;
+        if (i > 0) {
+            free(pre_result);
+        }
     }
 
     return result;
