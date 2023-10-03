@@ -1,0 +1,5 @@
+For n = 3, 3 child processes are created. After execution of the program, they sleep and become zombies.
+For n = 5, on the other hand, 5 child processes are created.
+And we can see that there are 3 zombies from the previous program call.
+After 5 seconds, the 3 zombies disappear and 2 new zombies are created from the current program call.
+At the end, all processes are terminated and no zombies are left.
