@@ -6,9 +6,7 @@
 
 #define MAX_MESSAGE_SIZE 1024
 
-void signal_handler(int signum) {
-    // Handle termination signals here
-    // For example, you can close the named pipe and exit gracefully
+void signal_handler() {
     exit(EXIT_SUCCESS);
 }
 

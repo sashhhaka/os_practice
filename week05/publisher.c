@@ -8,7 +8,12 @@
 
 #define MAX_MESSAGE_SIZE 1024
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <number_of_subscribers>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
     // Create a directory for named pipes if it doesn't exist
     const char* dir_path = "/tmp/ex1";
     if (mkdir(dir_path, 0777) == -1 && errno != EEXIST) {
@@ -17,7 +22,7 @@ int main() {
     }
 
     // Create named pipes for subscribers
-    int num_subscribers = 3; // Change this to the desired number of subscribers
+    int num_subscribers = atoi(argv[1]); // Change this to the desired number of subscribers
     char pipe_names[num_subscribers][64];
     int pipe_fds[num_subscribers];
 
