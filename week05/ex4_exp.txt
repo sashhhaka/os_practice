@@ -1,0 +1,4 @@
+The second code's fixed number of threads and possibly optimized synchronization logic seem to result
+in better parallelism and execution time reduction for smaller thread counts.
+However, both codes reach a point of diminishing returns with a large number of threads,
+likely due to system limitations and overhead.
