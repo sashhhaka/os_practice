@@ -8,6 +8,13 @@ fi
 
 num_subscribers=$1
 
+# compile publisher
+gcc publisher.c -o publisher
+# compile n subscribers
+for ((i = 1; i <= num_subscribers; i++)); do
+    gcc subscriber.c -o subscriber$i
+done
+
 # Create the directory if it doesn't exist
 mkdir -p /tmp/ex1
 
@@ -22,24 +29,12 @@ gnome-terminal --title="Publisher" -- bash -c "./publisher $num_subscribers; exe
 
 # Start each subscriber in a new terminal window
 for ((i = 1; i <= num_subscribers; i++)); do
-    gnome-terminal --title="Subscriber $i" -- bash -c "./subscriber $i; exec bash"
+    gnome-terminal --title="Subscriber $i" -- bash -c "./subscriber$i $i; exec bash"
 done
 
 # Wait for the publisher to finish (you may need to manually stop it)
 echo "The publisher is running. Press Enter to stop it..."
 read
-# close all the terminals
-killall gnome-terminal
-# Check if all subscribers received the message
-received_messages=$(find /tmp/ex1/ -type f | wc -l)
-if [ "$received_messages" -eq "$num_subscribers" ]; then
-    echo "All subscribers received the message."
-else
-    echo "Not all subscribers received the message."
-fi
-
-# Explain why we need to create n named pipes
-echo "We create n named pipes for n subscribers because each subscriber needs its own communication channel (pipe) to receive messages. Named pipes provide a way to establish a dedicated communication path between the publisher and each subscriber. Without separate pipes, messages could get mixed up or lost when multiple subscribers try to read from the same pipe simultaneously." > ex1.txt
 
 # Clean up named pipes and the directory
 for ((i = 1; i <= num_subscribers; i++)); do
@@ -48,4 +43,10 @@ done
 
 # Remove the directory if it's empty
 rmdir /tmp/ex1 2>/dev/null
+
+# Remove the executables
+rm -f publisher
+for ((i = 1; i <= num_subscribers; i++)); do
+    rm -f subscriber$i
+done
 

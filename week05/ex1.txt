@@ -1,0 +1,3 @@
+We create n named pipes for n subscribers because each subscriber needs its own communication channel (pipe) to receive messages.
+Named pipes provide a way to establish a dedicated communication path between the publisher and each subscriber.
+Without separate pipes, messages could get mixed up or lost when multiple subscribers try to read from the same pipe simultaneously.
