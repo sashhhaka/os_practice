@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Create named pipes for subscribers
-    int num_subscribers = atoi(argv[1]); // Change this to the desired number of subscribers
+    int num_subscribers = atoi(argv[1]);
     char pipe_names[num_subscribers][64];
     int pipe_fds[num_subscribers];
 
