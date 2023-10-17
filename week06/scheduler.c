@@ -109,6 +109,7 @@ void create_process(int new_process) {
     pid_t pid = fork();
 
     // TODO: Now the idx of the running process is new_process
+    running_process = new_process;
 
     // TODO: The scheduler process runs the program "./worker {new_process}"
     // using one of the exec functions like execvp
@@ -134,6 +135,8 @@ void create_process(int new_process) {
 
 }
 
+// find next process for running
+// find next process for running
 // find next process for running
 ProcessData find_next_process() {
     int location = -1; // Initialize to an invalid index.
@@ -200,7 +203,6 @@ void check_burst(){
 void schedule_handler(int signum) {
     // Increment the total time
     total_time++;
-    printf("Scheduler: Runtime: %u seconds\n", total_time);
 
     // 1. If there is a worker process running, decrement its remaining burst.
     if (running_process != -1) {
@@ -208,7 +210,7 @@ void schedule_handler(int signum) {
             data[running_process].burst--;
         }
 
-        printf("Process %d is running with %d seconds left\n", running_process, data[running_process].burst);
+        printf("Scheduler: Runtime: %u seconds.\nScheduler: Process %d is running with %d seconds left\n", total_time, running_process, data[running_process].burst);
 
         // 1.A. If the worker process finished its burst time.
         if (data[running_process].burst == 0) {
@@ -218,24 +220,25 @@ void schedule_handler(int signum) {
             terminate(running_process);
 
             // Reset the running_process.
-            running_process = -1;
             completed[running_process] = 1; // mark the process as completed.
+            running_process = -1;
+
         }
     }
 
     // 2. After that, find the next process to run.
+    check_burst();
     ProcessData next_process = find_next_process();
+    if (next_process.idx == -1) {
+        // No process is found.
+        printf("Scheduler: Runtime: %u seconds.\nProcess has not arrived yet.\n", total_time);
+
+    }
 
     // 3. If next_process is not running.
     if (running_process != next_process.idx) {
         // 3.A. If the current process is running, stop it.
-        if (running_process != -1) {
-            printf("Scheduler: Stopping Process %d (Remaining Time: %d)\n", running_process, data[running_process].burst);
-            suspend(running_process);
-        }
 
-        // 3.B. Set the current process as next_process.
-        running_process = next_process.idx;
 
         // 3.C.1. Create a new process for next_process.
         create_process(next_process.idx);
@@ -251,7 +254,7 @@ void schedule_handler(int signum) {
     }
 
     // Check bursts of all processes.
-    check_burst();
+
 }
 
 
