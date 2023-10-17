@@ -1,0 +1,60 @@
+The average turnaround time and average waiting time for the SJF algorithm is less than that of the FCFS algorithm.
+This is because the SJF algorithm is non-preemptive and the processes are executed in the order of their burst times.
+The process with the shortest burst time is executed first, followed by the next shortest burst time, and so on.
+This results in a shorter average turnaround time and average waiting time.
+
+Simulation results of the SJF algorithm:
+Simulation results.....
+process 0:
+  at=5
+  bt=2
+  ct=9
+  wt=2
+  tat=4
+  rt=2
+process 1:
+  at=7
+  bt=6
+  ct=15
+  wt=2
+  tat=8
+  rt=2
+process 2:
+  at=20
+  bt=3
+  ct=24
+  wt=1
+  tat=4
+  rt=1
+process 3:
+  at=3
+  bt=8
+  ct=32
+  wt=21
+  tat=29
+  rt=21
+process 4:
+  at=2
+  bt=4
+  ct=6
+  wt=0
+  tat=4
+  rt=0
+process 5:
+  at=3
+  bt=1
+  ct=7
+  wt=3
+  tat=4
+  rt=3
+process 6:
+  at=10
+  bt=6
+  ct=21
+  wt=5
+  tat=11
+  rt=5
+data size = 7
+Average results for this run:
+  avg_wt=4.857143
+  avg_tat=9.142858
