@@ -241,6 +241,7 @@ void schedule_handler(int signum) {
         create_process(next_process.idx);
         printf("Scheduler: Starting Process %d (Remaining Time: %d)\n", next_process.idx, data[next_process.idx].burst);
         // Calculate the metric rt for the new process.
+        data[next_process.idx].rt = total_time - data[next_process.idx].at;
 
         // 3.C.2. Or resume the process if it is stopped.
         if (data[next_process.idx].rt == data[next_process.idx].bt) {
