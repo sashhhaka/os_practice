@@ -1,0 +1,114 @@
+1) The scheduler works the same on different values of TRI_BASE.
+For example, for TRI_BASE=1000000 and TRI_BASE=100 the simulation results are the same:
+Simulation results.....
+process 0:
+  at=5
+  bt=2
+  ct=17
+  wt=10
+  tat=12
+  rt=10
+process 1:
+  at=7
+  bt=6
+  ct=23
+  wt=10
+  tat=16
+  rt=10
+process 2:
+  at=20
+  bt=3
+  ct=32
+  wt=9
+  tat=12
+  rt=9
+process 3:
+  at=3
+  bt=8
+  ct=14
+  wt=3
+  tat=11
+  rt=3
+process 4:
+  at=2
+  bt=4
+  ct=6
+  wt=0
+  tat=4
+  rt=0
+process 5:
+  at=3
+  bt=1
+  ct=15
+  wt=11
+  tat=12
+  rt=11
+process 6:
+  at=10
+  bt=6
+  ct=29
+  wt=13
+  tat=19
+  rt=13
+data size = 7
+Average results for this run:
+  avg_wt=8.000000
+  avg_tat=12.285714
+
+2) When arrival times of all processes are set to 0, the scheduler will put processes in the ready queue in the order of their process IDs:
+0, 1, 2, 3, 4, 5, 6.
+The simulation results are:
+Simulation results.....
+process 0:
+  at=0
+  bt=2
+  ct=3
+  wt=1
+  tat=3
+  rt=1
+process 1:
+  at=0
+  bt=6
+  ct=9
+  wt=3
+  tat=9
+  rt=3
+process 2:
+  at=0
+  bt=3
+  ct=12
+  wt=9
+  tat=12
+  rt=9
+process 3:
+  at=0
+  bt=8
+  ct=20
+  wt=12
+  tat=20
+  rt=12
+process 4:
+  at=0
+  bt=4
+  ct=24
+  wt=20
+  tat=24
+  rt=20
+process 5:
+  at=0
+  bt=1
+  ct=25
+  wt=24
+  tat=25
+  rt=24
+process 6:
+  at=0
+  bt=6
+  ct=31
+  wt=25
+  tat=31
+  rt=25
+data size = 7
+Average results for this run:
+  avg_wt=13.428572
+  avg_tat=17.714285

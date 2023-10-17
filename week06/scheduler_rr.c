@@ -5,7 +5,6 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/time.h>
-#include <limits.h>
 #define PS_MAX 10
 
 // holds the scheduling data of one process
@@ -138,12 +137,15 @@ void create_process(int new_process) {
 }
 
 
+
+
+
 // find next process for running
 ProcessData find_next_process() {
 
     // location of next process in {data} array
     int location = 0;
-    int mn = INT_MAX;
+    int mn = (int) 1e9;
 
     for (int i = 0; i < data_size; i++) {
 
@@ -271,6 +273,9 @@ void schedule_handler(int signum) {
 
 int main(int argc, char *argv[]) {
     total_time = 0;
+
+    printf("Enter the time quantum for Round Robin scheduling: ");
+    scanf("%d", &quantum);
 
     // read the data file
     FILE *in_file  = fopen(argv[1], "r");

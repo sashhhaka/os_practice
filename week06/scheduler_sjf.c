@@ -140,36 +140,29 @@ void create_process(int new_process) {
 
 // find next process for running
 ProcessData find_next_process() {
-
-    // location of next process in {data} array
-    int location = 0;
-    int mn = INT_MAX;
+    int location = -1;
+    int shortest_burst = INT_MAX;
 
     for (int i = 0; i < data_size; i++) {
-
-        // find location of the next process to run from the {data} array
-        // Considering the scheduling algorithm FCFS
-        if (data[i].burst <= 0)continue;
-        if (data[i].at < mn){
-            location = i;
-            mn = data[i].at;
+        if (data[i].burst > 0 && data[i].at <= total_time) {
+            // Check if the process has a shorter burst time.
+            if (data[i].bt < shortest_burst) {
+                location = i;
+                shortest_burst = data[i].bt;
+            }
         }
     }
 
-    // if next_process did not arrive so far,
-    // then we recursively call this function after incrementing total_time
-    if (data[location].at > total_time) {
-
-        printf("Scheduler: Runtime: %u seconds.\nProcess %d: has not arrived yet.\n", total_time, location);
-
-        // increment the time
-        total_time++;
-        return find_next_process();
+    if (location == -1) {
+        // No process is found.
+        ProcessData no_process;
+        no_process.idx = -1;
+        return no_process;
     }
 
-    // return the data of next process
     return data[location];
 }
+
 
 
 // reports the metrics and simulation results
