@@ -7,6 +7,8 @@
 #include <sys/time.h>
 #define PS_MAX 10
 
+int TIME_QUANTUM = 1;
+
 // holds the scheduling data of one process
 typedef struct{
     int idx; // process idx (index)
@@ -213,31 +215,36 @@ void check_burst(){
 }
 
 
-// This function is called every one second as handler for SIGALRM signal
+/// This function is called every one second as a handler for SIGALRM signal
 void schedule_handler(int signum) {
     // Increment the total time
     total_time++;
 
-    // 1. If there is a worker process running, decrement its remaining burst.
+    // 1. If there is a worker process running, decrement its remaining burst by the time quantum.
     if (running_process != -1) {
-        if (data[running_process].burst > 0) {
-            data[running_process].burst--;
+        int time_to_decrement = TIME_QUANTUM;
+        if (data[running_process].burst < TIME_QUANTUM) {
+            time_to_decrement = data[running_process].burst;
         }
+
+        data[running_process].burst -= time_to_decrement;
 
         printf("Scheduler: Runtime: %u seconds.\nScheduler: Process %d is running with %d seconds left\n", total_time, running_process, data[running_process].burst);
 
-        // 1.A. If the worker process finished its burst time.
-        if (data[running_process].burst == 0) {
-            printf("Scheduler: Terminating Process %d (Remaining Time: %d)\n", running_process, data[running_process].burst);
-
-            // Wait for its termination and calculate its metrics (ct, tat, wt).
-            terminate(running_process);
-
-            // Reset the running_process.
-            completed[running_process] = 1; // mark the process as completed.
-            running_process = -1;
-
+        // 1.A. If the worker process hasn't finished its burst time, reschedule it.
+        if (data[running_process].burst > 0) {
+            return;
         }
+
+        // 1.B. If the worker process has finished its burst time, terminate it.
+        printf("Scheduler: Terminating Process %d (Remaining Time: %d)\n", running_process, data[running_process].burst);
+
+        // Wait for its termination and calculate its metrics (ct, tat, wt).
+        terminate(running_process);
+
+        // Reset the running_process.
+        completed[running_process] = 1; // mark the process as completed.
+        running_process = -1;
     }
 
     // 2. After that, find the next process to run.
@@ -246,27 +253,21 @@ void schedule_handler(int signum) {
     if (next_process.idx == -1) {
         // No process is found.
         printf("Scheduler: Runtime: %u seconds.\nProcess has not arrived yet.\n", total_time);
-
+        return;
     }
 
-    // 3. If next_process is not running.
-    if (running_process != next_process.idx) {
-        // 3.A. If the current process is running, stop it.
+    // 3. Create or resume the process.
+    create_process(next_process.idx);
+    printf("Scheduler: Starting Process %d (Remaining Time: %d)\n", next_process.idx, data[next_process.idx].burst);
 
+    // Calculate the metric rt for the new process.
+    data[next_process.idx].rt = total_time - data[next_process.idx].at;
 
-        // 3.C.1. Create a new process for next_process.
-        create_process(next_process.idx);
-        printf("Scheduler: Starting Process %d (Remaining Time: %d)\n", next_process.idx, data[next_process.idx].burst);
-        // Calculate the metric rt for the new process.
-        data[next_process.idx].rt = total_time - data[next_process.idx].at;
-
-        // 3.C.2. Or resume the process if it is stopped.
-        if (data[next_process.idx].rt == data[next_process.idx].bt) {
-            printf("Scheduler: Resuming Process %d (Remaining Time: %d)\n", running_process, data[running_process].burst);
-            resume(running_process);
-        }
+    // If the process's response time equals its burst time, resume it.
+    if (data[next_process.idx].rt == data[next_process.idx].bt) {
+        printf("Scheduler: Resuming Process %d (Remaining Time: %d)\n", running_process, data[running_process].burst);
+        resume(running_process);
     }
-
 }
 
 
@@ -275,7 +276,9 @@ int main(int argc, char *argv[]) {
     total_time = 0;
 
     printf("Enter the time quantum for Round Robin scheduling: ");
-    scanf("%d", &quantum);
+    scanf("%d", &TIME_QUANTUM);
+
+
 
     // read the data file
     FILE *in_file  = fopen(argv[1], "r");
