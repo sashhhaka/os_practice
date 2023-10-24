@@ -127,7 +127,7 @@ void reset() {
 void execute(char *algorithm) {
     reset();
 
-    FILE *file = fopen("queries1.txt", "r");
+    FILE *file = fopen("queries.txt", "r");
     if (file == NULL) {
         printf("File is not found or cannot open it!\n");
         exit(EXIT_FAILURE);

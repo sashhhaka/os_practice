@@ -9,7 +9,7 @@
 #define BUFFER_SIZE (500 * 1024)
 
 int main() {
-    FILE *file = fopen("text.txt", "r+");
+    FILE *file = fopen("text.txt", "w+");
     if (file == NULL) {
         perror("fopen");
         exit(EXIT_FAILURE);
