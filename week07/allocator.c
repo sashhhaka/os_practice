@@ -128,7 +128,7 @@ void reset() {
 void execute(char *algorithm) {
     reset();
 
-    FILE *file = fopen("queries1.txt", "r");
+    FILE *file = fopen("queries.txt", "r");
     if (file == NULL) {
         printf("File is not found or cannot open it!\n");
         exit(EXIT_FAILURE);
@@ -143,39 +143,15 @@ void execute(char *algorithm) {
             if (strcmp(algorithm, "first_fit") == 0) {
                 allocate_first_fit(adrs, size);
 
-//                printf("%s %u %u\n", command, adrs, size);
-//                printf("%u %u\n", mem[0], mem[511]);
-//                printf("%u %u\n", mem[512], mem[512 + 255]);
-
             } else if (strcmp(algorithm, "best_fit") == 0) {
                 allocate_best_fit(adrs, size);
-                // print the whole memory
-
-//                printf("%s %u %u\n", command, adrs, size);
-//                printf("%u %u\n", mem[0], mem[511]);
-//                printf("%u %u\n", mem[512], mem[512 + 255]);
-//                for (int i = 0; i < MAX_MEM; i++) {
-//                    printf("%u ", mem[i]);
-//                }
-//                printf("\n");
             } else if (strcmp(algorithm, "worst_fit") == 0) {
                 allocate_worst_fit(adrs, size);
-//                printf("%s %u %u\n", command, adrs, size);
-//                printf("%u %u\n", mem[0], mem[511]);
-//                printf("%u %u\n", mem[512], mem[512 + 255]);
-//                printf("%s %u %u\n", command, adrs, size);
-//                for (int i = 0; i < MAX_MEM; i++) {
-//                    printf("%u ", mem[i]);
-//                }
-//                printf("\n");
             }
             query_count++;
         } else if (strcmp(command, "clear") == 0) {
             clear(adrs);
             query_count++;
-//            printf("%s %u %u\n", command, adrs, size);
-//            printf("%u %u\n", mem[0], mem[511]);
-//            printf("%u %u\n", mem[512], mem[512 + 255]);
         } else if (strcmp(command, "end") == 0) {
             break;
         } else {
@@ -191,11 +167,8 @@ void execute(char *algorithm) {
 }
 
 int main() {
-//    printf("First Fit:\n");
     execute("first_fit");
-//    printf("Best Fit:\n");
     execute("best_fit");
-//    printf("Worst Fit:\n");
     execute("worst_fit");
     return 0;
 
