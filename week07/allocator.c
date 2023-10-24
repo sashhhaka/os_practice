@@ -1,11 +1,10 @@
-// simple memory allocator  simulation
+// simple memory allocator simulation
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-//#define MAX_MEM 10000000
 #define MAX_MEM 10000000
 
 // Define global variables
@@ -128,7 +127,7 @@ void reset() {
 void execute(char *algorithm) {
     reset();
 
-    FILE *file = fopen("queries.txt", "r");
+    FILE *file = fopen("queries1.txt", "r");
     if (file == NULL) {
         printf("File is not found or cannot open it!\n");
         exit(EXIT_FAILURE);
