@@ -10,8 +10,6 @@
 
 #define PAGE_SIZE 8
 
-// TODO: clean the output
-// TODO: bash file to simultaneously run pager and mmu
 // TODO: fix input for mmu for reference string
 
 struct PTE {
@@ -287,5 +285,6 @@ int main(int argc, char *argv[]) {
     while (1) {
         pause();
     }
+
 
 }
