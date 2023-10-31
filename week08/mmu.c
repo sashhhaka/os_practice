@@ -19,18 +19,15 @@ struct PTE {
 int pid_pager;
 struct PTE *page_table;
 int num_pages;
-// reference string
 char *reference_string;
 
 int disk_accesses = 0;
-
 
 
 void process_memory_access(const char *access) {
     // Parse the memory access string (e.g., "R3" or "W7")
     char mode = access[0];
     int page = atoi(&access[1]);
-    // print Page 0 is referenced
     printf("-------------------------\n");
 
     if (mode == 'R') {
@@ -48,8 +45,7 @@ void process_memory_access(const char *access) {
         printf("Ask pager to load it from disk (SIGUSR1 signal) and wait\n");
         // Page is not in RAM, simulate a page fault
         page_table[page].referenced = getpid();
-        kill(pid_pager, SIGUSR1);  // Notify pager of page fault
-        printf("MMU paused\n");
+        kill(pid_pager, SIGCONT);  // Notify pager of page fault
         pause();  // Sleep until page is loaded (SIGCONT received)
     }
 
@@ -63,29 +59,14 @@ void process_memory_access(const char *access) {
 void sigusr1_handler(int signo) {
     // Handle SIGUSR1 (page fault)
     if (signo == SIGUSR1) {
-        printf("SIGUSR1 signal received\n");
         (void) signo;
     }
 
 }
 
-
-//void sigcont_handler(int signo) {
-//    // get the token by the disk_accesses as an index
-//    // for example if disk_accesses is 0, then get the first token, if disk_accesses is 1, then get the second token
-//    if (signo == SIGCONT) {
-//        printf("SIGCONT signal received\n");
-//        char *token = &reference_string[disk_accesses*3];
-//        disk_accesses++;
-//        process_memory_access(token);
-//    }
-//
-//}
-
 void sigcont_handler(int signo) {
     // Handle SIGCONT (page loaded)
     if (signo == SIGCONT) {
-        printf("SIGCONT signal received\n");
         (void) signo;
     }
 }
@@ -114,19 +95,21 @@ void initialize_page_table(int num_pages) {
                i, page_table[i].valid, page_table[i].frame, page_table[i].dirty, page_table[i].referenced);
     }
 
-
-
+    close(fd);
 }
-
 
 
 void cleanup() {
     // Clean up and unmap the mapped file
-    munmap(page_table, num_pages * sizeof(struct PTE));
+    // send sigusr1 to pager to terminate it
+    printf("-------------------------\n");
+    printf("Done all requests.\n");
+    printf("MMU sends SIGUSR1 signal to the pager.\n");
+    kill(pid_pager, SIGUSR1);
+    printf("MMU terminates.\n");
     exit(0);
 }
 
-void catcher() {}
 
 int main(int argc, char *argv[]) {
 
@@ -149,10 +132,6 @@ int main(int argc, char *argv[]) {
     // parse the reference string
     reference_string = argv[2];
 
-    // print A disk access request from MMU Process (pid=283032)
-    printf("-------------------------\n");
-    printf("A disk access request from MMU Process (pid=%d)\n", getpid());
-
     // Initialize the page table
     initialize_page_table(num_pages);
 
@@ -172,7 +151,6 @@ int main(int argc, char *argv[]) {
         token = strtok(NULL, " ");
     }
 
-    pause();
 
     // Cleanup and exit
     cleanup();

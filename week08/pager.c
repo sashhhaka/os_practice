@@ -4,13 +4,15 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
-#include <time.h>
 
 #define PAGE_SIZE 8
+
+// TODO: clean the output
+// TODO: bash file to simultaneously run pager and mmu
+// TODO: fix input for mmu for reference string
 
 struct PTE {
     bool valid;
@@ -22,11 +24,9 @@ struct PTE {
 int num_pages;
 int num_frames;
 struct PTE *page_table;
-// RAM as an array of strings of size num_frames
-// disk as an array of strings of size num_pages
 char **RAM;
 char **disk;
-bool **frames;
+int *frames;
 
 //int mmu_pid;
 
@@ -35,9 +35,8 @@ int disk_accesses = 0;
 int count_evict = 0;
 
 void evict_page(int page, int mmu_pid) {
-    // Choose a random frame as a victim page (for simplicity)
+    // TODO: random choose of victim page
 //    int victim_frame = rand() % num_frames;
-    // Choose the frame next to the last victim page
     int victim_frame = count_evict % 2;
 
     count_evict++;
@@ -49,17 +48,26 @@ void evict_page(int page, int mmu_pid) {
     printf("Replace/Evict it with page %d to be allocated to frame %d\n", page, victim_frame);
     printf("Copy data from the disk (page=%d) to RAM (frame=%d)\n", page, victim_frame);
 
-    // If the victim page is dirty, simulate writing to disk
-    if (page_table[victim_frame].dirty) {
-        disk_accesses++;
-        memcpy(disk[page], RAM[victim_frame], PAGE_SIZE);
-        printf("ram %s, disk %s", RAM[victim_frame], disk[page]);
+    // find page in pagetable with frame = victim_frame
+    int page_to_evict = -1;
+    for (int i = 0; i < num_pages; i++) {
+        if (page_table[i].frame == victim_frame) {
+            page_to_evict = i;
+            break;
+        }
+    }
 
+    if (page_table[page_to_evict].dirty) {
+        disk_accesses++;
+        memcpy(disk[page_to_evict], RAM[victim_frame], PAGE_SIZE);
     }
 
     memcpy(RAM[victim_frame], disk[page], PAGE_SIZE);
 
-    page_table[victim_frame].frame = -1;
+    page_table[page_to_evict].frame = -1;
+    page_table[page_to_evict].valid = false;
+    page_table[page_to_evict].dirty = false;
+    page_table[page_to_evict].referenced = 0;
 
     page_table[page].frame = victim_frame;
     page_table[page].valid = true;
@@ -74,18 +82,13 @@ void evict_page(int page, int mmu_pid) {
 
     printf("disk accesses is %d so far\n", disk_accesses);
     printf("Resume MMU process\n");
-    printf("mmu_pid is %d\n", mmu_pid);
 
-
-    // Update the page table to indicate that the victim page is not in RAM
-    page_table[victim_frame].valid = false;
-
-    // Notify the MMU with SIGCONT that the page is loaded
     kill(mmu_pid, SIGCONT);
+
 }
 
 void process_page_request() {
-    int has_free_frame = 0;
+    int free_frame = 0;
 
     for (int i = 0; i < num_pages; i++) {
         if (page_table[i].referenced != 0) {
@@ -101,59 +104,57 @@ void process_page_request() {
             } else if (num_frames > 0) {
                 // There's a free frame; load the page into RAM
                 for (int j = 0; j < num_frames; j++) {
-                    if (!page_table[j].valid) {
-                        has_free_frame = 1;
-                        // print We can allocate it to free frame 0
-                        printf("We can allocate it to free frame %d\n", j);
-                        printf("Copy data from disk (page=%d) to RAM (frame=%d)\n", i, j);
-                        page_table[i].frame = j;
+                    // count the number of free frames
+                    // RAM[j] is not NULL
+                    if (!frames[j]) {
+                        free_frame++;
+                        int free_frame_index = j;
+                        printf("We can allocate it to frame %d\n", free_frame_index);
+                        printf("Copy data from the disk (page=%d) to RAM (frame=%d)\n", i, free_frame_index);
+                        memcpy(RAM[free_frame_index], disk[i], PAGE_SIZE);
+                        frames[free_frame_index] = 1;
+                        page_table[i].frame = free_frame_index;
                         page_table[i].valid = true;
                         page_table[i].dirty = false;
                         page_table[i].referenced = 0;
-                        memcpy(RAM[j], disk[i], PAGE_SIZE);
-                        printf("ram %s, disk %s", RAM[j], disk[i]);
-                        // print the RAM array
-                        disk_accesses++;
                         printf("RAM array\n");
-                        for (int k = 0; k < num_frames; k++) {
-                            printf("Frame %d ---> %s\n", k, RAM[k]);
+                        for (int i = 0; i < num_frames; i++) {
+                            printf("Frame %d ---> %s\n", i, RAM[i]);
                         }
+                        disk_accesses++;
                         printf("disk accesses is %d so far\n", disk_accesses);
                         printf("Resume MMU process\n");
-                        // print the mmu_pid
-                        printf("mmu_pid is %d\n", mmu_pid);
                         kill(mmu_pid, SIGCONT);
                         break;
                     }
                 }
-                if (!has_free_frame) {
+                if (!free_frame) {
                     printf("We do not have free frames in RAM\n");
                     evict_page(i, mmu_pid);
                     break;
                 }
-//                printf("We do not have free frames in RAM\n");
-//                evict_page(i);
             }
         }
     }
-
 }
 
-void sigusr1_handler(int signo) {
+void sigcont_handler(int signo) {
     // use process_page_request() to handle the page request from MMU
-    if (signo == SIGUSR1) {
-        printf("Pager received SIGUSR1 signal from MMU\n");
+    if (signo == SIGCONT) {
         process_page_request();
     }
 
 }
 
-void sigcont_handler(int signo) {
+void sigusr1_handler(int signo) {
     // Handle SIGCONT (page loaded)
     // Wake up from sleep to continue processing
-    if (signo == SIGCONT) {
+    if (signo == SIGUSR1) {
         printf("Pager received SIGCONT signal from MMU\n");
-        (void) signo;
+        printf("-------------------------\n");
+        printf("%d disk accesses in total\n", disk_accesses);
+        printf("Pager is terminated\n");
+        exit(0);
     }
 }
 
@@ -192,10 +193,11 @@ void initialize_page_table() {
 }
 
 void initialize_disk() {
+    // TODO: random disk initialization
     // Initialize the disk array with empty pages
-    disk = (char **)malloc(num_pages * sizeof(char *));
+    disk = (char **) malloc(num_pages * sizeof(char *));
     for (int i = 0; i < num_pages; i++) {
-        disk[i] = (char *)malloc(PAGE_SIZE);
+        disk[i] = (char *) malloc(PAGE_SIZE);
         switch (i) {
             case 0:
                 strcpy(disk[i], "gEefwaq");
@@ -225,11 +227,18 @@ void initialize_disk() {
 
 void initialize_RAM() {
     // Initialize the RAM array with empty pages
-    RAM = (char **)malloc(num_frames * sizeof(char *));
+    // set values in RAM to NULL
+    RAM = (char **) malloc(num_frames * sizeof(char *));
     for (int i = 0; i < num_frames; i++) {
-        RAM[i] = (char *)malloc(PAGE_SIZE);
+        RAM[i] = (char *) malloc(PAGE_SIZE);
         memset(RAM[i], 0, PAGE_SIZE);
     }
+    // initialize frames to 0
+    frames = (int *) malloc(num_frames * sizeof(int));
+    for (int i = 0; i < num_frames; i++) {
+        frames[i] = 0;
+    }
+
 
     printf("-------------------------\n");
     printf("Initialized RAM\nRAM array\n");
@@ -237,7 +246,6 @@ void initialize_RAM() {
         printf("RAM %d ---> %s\n", i, RAM[i]);
     }
 }
-
 
 
 void cleanup() {
@@ -275,14 +283,9 @@ int main(int argc, char *argv[]) {
     signal(SIGUSR1, sigusr1_handler);
     signal(SIGCONT, sigcont_handler);
 
-    // Wait for SIGUSR1 signal (MMU page request)
+    // Wait for signals from MMU
     while (1) {
         pause();
     }
-//
-//    // Process the page request and handle page loading/eviction
-//    process_page_request();
 
-    // Cleanup and exit
-    cleanup();
 }
