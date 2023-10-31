@@ -49,7 +49,7 @@ void process_memory_access(const char *access) {
         // Page is not in RAM, simulate a page fault
         page_table[page].referenced = getpid();
         kill(pid_pager, SIGUSR1);  // Notify pager of page fault
-        printf("MMU paused by SIGUSR1 signal from pager\n");
+        printf("MMU paused\n");
         pause();  // Sleep until page is loaded (SIGCONT received)
     }
 
@@ -58,14 +58,6 @@ void process_memory_access(const char *access) {
     if (mode == 'W') {
         page_table[page].dirty = true;
     }
-
-    // Print the updated page table
-    printf("Page Table %s:\n", access);
-    for (int i = 0; i < num_pages; i++) {
-        printf("Page %d: Valid=%d, Frame=%d, Dirty=%d, Referenced=%d\n",
-               i, page_table[i].valid, page_table[i].frame, page_table[i].dirty, page_table[i].referenced);
-    }
-    printf("\n");
 }
 
 void sigusr1_handler(int signo) {
@@ -78,17 +70,24 @@ void sigusr1_handler(int signo) {
 }
 
 
+//void sigcont_handler(int signo) {
+//    // get the token by the disk_accesses as an index
+//    // for example if disk_accesses is 0, then get the first token, if disk_accesses is 1, then get the second token
+//    if (signo == SIGCONT) {
+//        printf("SIGCONT signal received\n");
+//        char *token = &reference_string[disk_accesses*3];
+//        disk_accesses++;
+//        process_memory_access(token);
+//    }
+//
+//}
+
 void sigcont_handler(int signo) {
-    // get the token by the disk_accesses as an index
-    // for example if disk_accesses is 0, then get the first token, if disk_accesses is 1, then get the second token
+    // Handle SIGCONT (page loaded)
     if (signo == SIGCONT) {
         printf("SIGCONT signal received\n");
-        char *token = &reference_string[disk_accesses*3];
-        disk_accesses++;
-        process_memory_access(token);
+        (void) signo;
     }
-
-
 }
 
 void initialize_page_table(int num_pages) {
@@ -100,6 +99,7 @@ void initialize_page_table(int num_pages) {
     }
 
     // map the file to memory
+    ftruncate(fd, num_pages * sizeof(struct PTE));
     page_table = mmap(NULL, num_pages * sizeof(struct PTE), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (page_table == MAP_FAILED) {
         perror("mmap");
@@ -161,7 +161,16 @@ int main(int argc, char *argv[]) {
     signal(SIGCONT, sigcont_handler);
 
     //   Process the reference string
-    sigcont_handler(SIGCONT);
+    char *token = strtok(reference_string, " ");
+    while (token != NULL) {
+        process_memory_access(token);
+        printf("Page table\n");
+        for (int i = 0; i < num_pages; i++) {
+            printf("Page %d ---> valid=%d, frame=%d, dirty=%d, referenced=%d\n",
+                   i, page_table[i].valid, page_table[i].frame, page_table[i].dirty, page_table[i].referenced);
+        }
+        token = strtok(NULL, " ");
+    }
 
     pause();
 
