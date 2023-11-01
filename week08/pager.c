@@ -31,7 +31,6 @@ int disk_accesses = 0;
 int count_evict = 0;
 
 void evict_page(int page, int mmu_pid) {
-    // TODO: random choose of victim page
     int victim_frame = rand() % num_frames;
 //    int victim_frame = count_evict % 2;
 
