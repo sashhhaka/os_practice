@@ -24,22 +24,16 @@ char **RAM;
 char **disk;
 int *frames;
 
-//int mmu_pid;
-
 
 int disk_accesses = 0;
 int count_evict = 0;
 
 void evict_page(int page, int mmu_pid) {
     int victim_frame = rand() % num_frames;
-//    int victim_frame = count_evict % 2;
-
     count_evict++;
     disk_accesses++;
 
-
     printf("Choose a random victim page %d\n", victim_frame);
-
     printf("Replace/Evict it with page %d to be allocated to frame %d\n", page, victim_frame);
     printf("Copy data from the disk (page=%d) to RAM (frame=%d)\n", page, victim_frame);
 
@@ -100,7 +94,6 @@ void process_page_request() {
                 // There's a free frame; load the page into RAM
                 for (int j = 0; j < num_frames; j++) {
                     // count the number of free frames
-                    // RAM[j] is not NULL
                     if (!frames[j]) {
                         free_frame++;
                         int free_frame_index = j;
@@ -134,7 +127,6 @@ void process_page_request() {
 }
 
 void sigcont_handler(int signo) {
-    // use process_page_request() to handle the page request from MMU
     if (signo == SIGCONT) {
         process_page_request();
     }
@@ -142,8 +134,6 @@ void sigcont_handler(int signo) {
 }
 
 void sigusr1_handler(int signo) {
-    // Handle SIGCONT (page loaded)
-    // Wake up from sleep to continue processing
     if (signo == SIGUSR1) {
         printf("Pager received SIGCONT signal from MMU\n");
         printf("-------------------------\n");
@@ -154,10 +144,9 @@ void sigusr1_handler(int signo) {
 }
 
 void initialize_page_table() {
-    // create the /tmp/ex2/pagetable file and mmap it
     int fd = open("/tmp/ex2/pagetable", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1) {
-        perror("open /tmp/ex2/pagetable");
+        perror("Failed to open /tmp/ex2/pagetable");
         exit(1);
     }
     // initialize the page table
@@ -176,7 +165,6 @@ void initialize_page_table() {
         page_table[i].referenced = 0;
     }
 
-    // print ---------------------------------
     printf("-------------------------\n");
     printf("Initialized page table\n");
     for (int i = 0; i < num_pages; i++) {
@@ -189,11 +177,11 @@ void initialize_page_table() {
 
 void initialize_disk() {
     // Initialize the disk array with empty pages
-    disk = (char **)malloc(num_pages * sizeof(char *));
+    disk = (char **) malloc(num_pages * sizeof(char *));
     static const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     char **word;
     for (int i = 0; i < num_pages; i++) {
-        disk[i] = (char *)malloc(PAGE_SIZE);
+        disk[i] = (char *) malloc(PAGE_SIZE);
         if (i < 4) {
             // Initialize specific pages
             switch (i) {

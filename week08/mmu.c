@@ -120,12 +120,6 @@ int main(int argc, char *argv[]) {
     sigact.sa_handler = sigcont_handler;
     sigaction(SIGCONT, &sigact, NULL);
 
-//    if (argc != 4) {
-//        fprintf(stderr, "Usage: %s num_pages reference_string pager_pid\n", argv[0]);
-//        return 1;
-//    }
-
-
     int num_pages = atoi(argv[1]);
 
     pid_pager = atoi(argv[3]);

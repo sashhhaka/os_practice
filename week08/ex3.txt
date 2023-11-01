@@ -1,0 +1,56 @@
+An experiment revealed that when memory is not released within a loop, the compiler does not automatically handle
+memory deallocation, causing memory usage to steadily increase.
+However, by incorporating the freeing of memory within the loop, we can prevent memory leaks.
+In both outputs, swapping operations occur as memory usage increases.
+The main difference is that Output 1 (with 10 MB memory) swaps data at a slower rate,
+while Output 2 (with 1000 MB memory) swaps data more quickly due to the larger initial memory allocation.
+
+Output (for code without free inside of for-loop and 10 MB memory size):
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 3  0 1991292 3673324   7740 520416    4   13    28    25  135   31  4  1 95  0  0
+Memory usage: 11264 KB
+ 0  0 1991288 3669796   7740 520468    0    0    28     0 1953 3088  1  1 98  0  0
+Memory usage: 21888 KB
+ 1  0 1991280 3659464   7740 520564   24    0   140  1824 1656 2394  1  1 98  0  0
+Memory usage: 32128 KB
+ 1  0 1991240 3638296   7744 531688   44    0  8342     0 1614 2426  1  2 97  1  0
+Memory usage: 42368 KB
+ 1  0 1991196 3625220   7744 534312   44    0   604     0 1674 2346  1  1 98  0  0
+Memory usage: 52608 KB
+ 1  0 1991188 3614888   7744 534308   20    0    20     0 1463 2192  1  1 98  0  0
+Memory usage: 62848 KB
+ 1  0 1991188 3604556   7752 534308    0    0     0    48 1436 2098  1  0 98  0  0
+Memory usage: 73216 KB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0 1991184 3594252   7752 534308    4    0     4     0 1457 2107  1  1 99  0  0
+Memory usage: 83456 KB
+ 0  0 1991172 3583416   7768 534420   12    0   396    68 1613 2334  1  1 98  1  0
+Memory usage: 93696 KB
+ 0  0 1991164 3572580   7768 535544    4    0   589     0 1539 2251  1  1 98  0  0
+Memory usage: 103936 KB
+
+Output (for code without free inside of for-loop and 1000 MB memory size):
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 3  1 1910288 3759844   7640 440928    6   60   143   112  331  598  5  1 93  0  0
+Memory usage: 1025024 KB
+ 0  0 1910276 2733956   7640 441152   92    0   108     0 1865 2675  2  6 92  0  0
+ 1  0 1910220 1730492   7648 441184   76    0    76    28 1769 2449  2  6 92  0  0
+Memory usage: 2049408 KB
+ 0  0 1909588 1705796   9072 441384  828    0  2252   152 1720 2686  2  1 98  0  0
+Memory usage: 3073408 KB
+ 0  0 1909568 680916   9072 441384   28    0    28     0 1581 2133  2  6 92  0  0
+ 2  0 2048232 106612   9068 430452  392 138604   392 138604 9730 3389  2  9 89  0  0
+Memory usage: 4097152 KB
+ 0  0 2097148 131272    684 190344  280 49640 11442 49812 5751 3501  1 17 81  1  0
+ 1  0 2097100 2586804   1840 202148  124   12 92302    36 4801 5657  1 17 79  3  0
+ 3  0 2096940 4175024   2136 241912  240    0 39745    64 2536 3625  1  3 95  1  0
+ 0  2 2096832 4165492   2184 251484  120    0  7340     0 1800 2747  1  1 98  0  0
+ 0  1 2081808 4121392   2356 288180 7312    0 34220     0 3985 7303  1  3 94  2  0
+ 0  0 2081788 4104260   2356 305176   20    0 16676     0 2082 3011  1  1 97  1  0
+ 0  1 2081696 4089404   2360 319392  136    0 14576  1688 2097 3043  1  1 98  1  0
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0 2081680 4087904   2368 320548   32    0   968    64 1812 2618  1  0 98  0
