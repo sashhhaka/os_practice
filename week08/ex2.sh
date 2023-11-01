@@ -2,6 +2,12 @@
 
 echo "Starting simulation..."
 
+# example: ./ex2.sh 4 2 R0 R1 W1 R0 R2 W2 R0 R3 W2
+pages=$1
+frames=$2
+# parse ref_string from cmd till the end
+ref_string=${@:3}
+
 # Compile mmu.c
 gcc mmu.c -o mmu
 
@@ -13,13 +19,13 @@ mkdir -p /tmp/ex2/
 touch /tmp/ex2/pagetable.txt
 
 # Run pager process in background
-./pager 4 2 > pager.txt &
+./pager $pages $frames > pager.txt &
 
 pagerPID=$(pidof -s pager)
 echo "Pager PID: $pagerPID"
 
 # Run MMU process
-./mmu 4 "R0 R1 W1 R0 R2 W2 R0 R3 W2" $pagerPID > mmu.txt
+./mmu 4 "$ref_string" "$pagerPID" > mmu.txt
 
 
 # Cleanup

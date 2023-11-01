@@ -10,8 +10,6 @@
 
 #define PAGE_SIZE 8
 
-// TODO: fix input for mmu for reference string
-
 struct PTE {
     bool valid;
     int frame;
@@ -34,8 +32,8 @@ int count_evict = 0;
 
 void evict_page(int page, int mmu_pid) {
     // TODO: random choose of victim page
-//    int victim_frame = rand() % num_frames;
-    int victim_frame = count_evict % 2;
+    int victim_frame = rand() % num_frames;
+//    int victim_frame = count_evict % 2;
 
     count_evict++;
     disk_accesses++;
@@ -191,27 +189,35 @@ void initialize_page_table() {
 }
 
 void initialize_disk() {
-    // TODO: random disk initialization
     // Initialize the disk array with empty pages
-    disk = (char **) malloc(num_pages * sizeof(char *));
+    disk = (char **)malloc(num_pages * sizeof(char *));
+    static const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    char **word;
     for (int i = 0; i < num_pages; i++) {
-        disk[i] = (char *) malloc(PAGE_SIZE);
-        switch (i) {
-            case 0:
-                strcpy(disk[i], "gEefwaq");
-                break;
-            case 1:
-                strcpy(disk[i], "kjQ2eeq");
-                break;
-            case 2:
-                strcpy(disk[i], "43R2e2e");
-                break;
-            case 3:
-                strcpy(disk[i], "jji2u32");
-                break;
-            default:
-                memset(disk[i], 0, PAGE_SIZE);
-                break;
+        disk[i] = (char *)malloc(PAGE_SIZE);
+        if (i < 4) {
+            // Initialize specific pages
+            switch (i) {
+                case 0:
+                    strcpy(disk[i], "gEefwaq");
+                    break;
+                case 1:
+                    strcpy(disk[i], "kjQ2eeq");
+                    break;
+                case 2:
+                    strcpy(disk[i], "43R2e2e");
+                    break;
+                case 3:
+                    strcpy(disk[i], "jji2u32");
+                    break;
+            }
+        } else {
+            // Generate random words for other pages
+            for (int j = 0; j < PAGE_SIZE - 1; j++) {
+                int index = rand() % (sizeof(charset) - 1);
+                disk[i][j] = charset[index];
+            }
+            disk[i][PAGE_SIZE - 1] = '\0'; // Null-terminate the string
         }
     }
 
