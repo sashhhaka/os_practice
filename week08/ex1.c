@@ -8,7 +8,7 @@
 
 #define PASSWORD_LENGTH 8
 
-int init_files() {
+int initFiles() {
     // Create a file to write PID
     FILE *pidFile = fopen("/tmp/ex1.pid", "w");
     if (pidFile != NULL) {
@@ -27,14 +27,11 @@ int init_files() {
     return urandom_fd;
 }
 
-int main() {
-    // Create a file to write PID
-    int urandom_fd = init_files();
-
+char* generateRandomPassword(int urandom_fd) {
     char password[PASSWORD_LENGTH + 1];
-
     char buffer[PASSWORD_LENGTH];
     int buffer_index = 0;
+
     for (int i = 0; i < PASSWORD_LENGTH; i++) {
         if (!buffer_index) {
             ssize_t bytes_read = read(urandom_fd, buffer, PASSWORD_LENGTH);
@@ -51,25 +48,39 @@ int main() {
     }
 
     close(urandom_fd);
-
-    // Null-terminate the password and prepend "pass:"
     password[PASSWORD_LENGTH] = '\0';
-    char final_password[PASSWORD_LENGTH + 6];
-    snprintf(final_password, sizeof(final_password), "pass:%s", password);
 
+    // Return a dynamically allocated copy of the password
+    return strdup(password);
+}
+
+void createSharedMemory(const char* password) {
     // Create a shared anonymous memory mapping
-    char *shared_memory = malloc(sizeof(password));
+    char *shared_memory = malloc(strlen(password) + 6);
 
-    if (shared_memory == MAP_FAILED) {
+    if (shared_memory == NULL) {
         perror("Failed to create shared memory mapping");
-        return 1;
+        exit(1);
     }
 
+    // Null-terminate the password and prepend "pass:"
+    snprintf(shared_memory, strlen(password) + 6, "pass:%s", password);
+
     // Copy the password to the shared memory
-    strcpy(shared_memory, final_password);
+    strcpy(shared_memory, shared_memory);
+}
+
+int main() {
+    // Create a file to write PID and open /dev/urandom
+    int urandom_fd = initFiles();
+
+    char *password = generateRandomPassword(urandom_fd);
+    createSharedMemory(password);
 
     while (1) {
         sleep(1);
     }
 
+    // Don't forget to free the dynamically allocated memory when done with password and shared_memory.
+    free(password);
 }
