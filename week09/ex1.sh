@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # example: ./ex1.sh 4 2 algorithm(random/nfu/aging) R0 R1 W1 R0 R2 W2 R0 R3 W2
-# ./ex1.sh 1000 200 random
+# ./ex1.sh 1000 500 random
 
 pages=$1
 frames=$2
