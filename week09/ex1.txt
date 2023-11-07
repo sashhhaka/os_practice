@@ -1,0 +1,16 @@
+1000p/100f, 1000p/500f
+Random
+Hit Ratio: 0.1050, 0.3590
+NFU
+Hit Ratio: 0.0990, 0.3570
+Aging
+Hit Ratio: 0.0980, 0.3540
+
+Having more frames enhances the hit ratios because more pages
+can be stored in memory, reducing page faults.
+However, the choice of algorithm still influences the hit ratio,
+with Random being more unpredictable compared to NFU and Aging.
+On the given test cases and on my working machine NFU showed itself as a slightly better algorithm than Aging.
+In general case the choice between the two depends on the specific characteristics
+of the system and the desired adaptability to changing access patterns.
+NFU might be more predictable, while Aging can adapt better to evolving usage patterns.

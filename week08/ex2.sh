@@ -2,7 +2,7 @@
 
 echo "Starting simulation..."
 
-# example: ./ex2.sh 4 2 R0 R1 W1 R0 R2 W2 R0 R3 W2
+# example: ./ex1.sh 4 2 R0 R1 W1 R0 R2 W2 R0 R3 W2
 pages=$1
 frames=$2
 # parse ref_string from cmd till the end
