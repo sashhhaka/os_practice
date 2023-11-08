@@ -11,7 +11,7 @@
 
 #define PAGE_SIZE 8
 
-struct PTE {
+struct PageTableEntry {
     bool valid;
     int frame;
     bool dirty;
@@ -25,27 +25,25 @@ int *frames;
 
 int number_of_frames;
 int number_of_pages;
-struct PTE *pagetable;
+struct PageTableEntry *page_table;
 
-int (*page_replacement_algorithm)(struct PTE *page_table);
-
+int (*page_replacement_algorithm)(struct PageTableEntry *page_table);
 
 int accesses_count = 0;
 int evict_count = 0;
 
-
-int my_random(struct PTE *page_table) {
+int my_random(struct PageTableEntry *page_table) {
     int victim_frame = rand() % number_of_frames;
     int page_to_evict = -1;
     for (int i = 0; i < number_of_pages; i++) {
-        if (pagetable[i].frame != victim_frame) continue;
+        if (page_table[i].frame != victim_frame) continue;
         page_to_evict = i;
         break;
     }
     return page_to_evict;
 }
 
-int nfu(struct PTE *page_table) {
+int nfu(struct PageTableEntry *page_table) {
     int min_referenced = INT_MAX;
     int page_to_evict = -1;
 
@@ -55,12 +53,12 @@ int nfu(struct PTE *page_table) {
             page_to_evict = i;
         }
     }
-    pagetable[page_to_evict].counter++;
+    page_table[page_to_evict].counter++;
 
     return page_to_evict;
 }
 
-int aging(struct PTE *page_table) {
+int aging(struct PageTableEntry *page_table) {
     int min_aging = INT_MAX;
     int page_to_evict = -1;
 
@@ -78,17 +76,14 @@ int aging(struct PTE *page_table) {
             }
         }
     }
-    pagetable[page_to_evict].counter++;
+    page_table[page_to_evict].counter++;
 
     return page_to_evict;
 }
 
-
-void evict_page(int page, int mmu_pid, int (*algorithm)(struct PTE *page_table)) {
-    int page_to_evict = algorithm(pagetable); // Call the selected algorithm
-    int victim_frame = pagetable[page_to_evict].frame;
-//    int victim_frame = algorithm(pagetable);
-//    int victim_frame = my_random(pagetable);
+void evict_page(int page, int mmu_pid, int (*algorithm)(struct PageTableEntry *page_table)) {
+    int page_to_evict = algorithm(page_table);
+    int victim_frame = page_table[page_to_evict].frame;
     evict_count++;
     accesses_count++;
 
@@ -96,22 +91,22 @@ void evict_page(int page, int mmu_pid, int (*algorithm)(struct PTE *page_table))
     printf("Replace/Evict it with page %d to be allocated to frame %d\n", page, victim_frame);
     printf("Copy data from the disk (page=%d) to RAM (frame=%d)\n", page, victim_frame);
 
-    if (pagetable[page_to_evict].dirty) {
+    if (page_table[page_to_evict].dirty) {
         memcpy(disk[page_to_evict], memory[victim_frame], PAGE_SIZE);
         accesses_count++;
     }
 
     memcpy(memory[victim_frame], disk[page], PAGE_SIZE);
 
-    pagetable[page_to_evict].frame = -1;
-    pagetable[page_to_evict].valid = false;
-    pagetable[page_to_evict].dirty = false;
-    pagetable[page_to_evict].referenced = 0;
+    page_table[page_to_evict].frame = -1;
+    page_table[page_to_evict].valid = false;
+    page_table[page_to_evict].dirty = false;
+    page_table[page_to_evict].referenced = 0;
 
-    pagetable[page].frame = victim_frame;
-    pagetable[page].valid = true;
-    pagetable[page].dirty = false;
-    pagetable[page].referenced = 0;
+    page_table[page].frame = victim_frame;
+    page_table[page].valid = true;
+    page_table[page].dirty = false;
+    page_table[page].referenced = 0;
 
     printf("RAM array\n");
     for (int i = 0; i < number_of_frames; i++)
@@ -123,15 +118,15 @@ void evict_page(int page, int mmu_pid, int (*algorithm)(struct PTE *page_table))
     kill(mmu_pid, SIGCONT);
 }
 
-void request(int (*algorithm)(struct PTE *page_table)) {
+void request(int (*algorithm)(struct PageTableEntry *page_table)) {
     int free = 0;
     for (int i = 0; i < number_of_pages; i++) {
-        if (pagetable[i].referenced != 0) {
-            int mmu_pid = pagetable[i].referenced;
+        if (page_table[i].referenced != 0) {
+            int mmu_pid = page_table[i].referenced;
             printf("-------------------------\n");
-            printf("A disk access request from MMU Process (pid=%d)\n", pagetable[i].referenced);
+            printf("A disk access request from MMU Process (pid=%d)\n", page_table[i].referenced);
             printf("Page %d is referenced\n", i);
-            if (!pagetable[i].valid) {
+            if (!page_table[i].valid) {
                 if (number_of_frames <= 0) continue;
                 for (int j = 0; j < number_of_frames; j++) {
                     if (!frames[j]) {
@@ -141,10 +136,10 @@ void request(int (*algorithm)(struct PTE *page_table)) {
                         memcpy(memory[j], disk[i], PAGE_SIZE);
                         frames[j] = 1;
 
-                        pagetable[i].frame = j;
-                        pagetable[i].valid = true;
-                        pagetable[i].dirty = false;
-                        pagetable[i].referenced = 0;
+                        page_table[i].frame = j;
+                        page_table[i].valid = true;
+                        page_table[i].dirty = false;
+                        page_table[i].referenced = 0;
 
                         printf("RAM array\n");
 
@@ -163,26 +158,23 @@ void request(int (*algorithm)(struct PTE *page_table)) {
 
                 if (!free) {
                     printf("We do not have free frames in RAM\n");
-                    // Here, we call the evict_page function with the selected algorithm
                     evict_page(i, mmu_pid, algorithm);
                     break;
                 }
             } else {
                 printf("Page %d is in RAM\n", i);
-                pagetable[i].referenced = 0;
-                kill(pagetable[i].referenced, SIGCONT);
+                page_table[i].referenced = 0;
+                kill(page_table[i].referenced, SIGCONT);
             }
         }
     }
 }
-
 
 void sigcont_handler(int signo) {
     if (signo == SIGCONT) {
         request(page_replacement_algorithm);
     }
 }
-
 
 void sigusr1_handler(int signo) {
     if (signo == SIGUSR1) {
@@ -196,41 +188,41 @@ void sigusr1_handler(int signo) {
 }
 
 void initialize_page_table() {
-    int fd = open("/tmp/ex2/pagetable", 02 | 0100, 0400 | 0200);
+    int fd = open("/tmp/ex2/pagetable", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1) {
         perror("open /tmp/ex2/pagetable");
         exit(EXIT_FAILURE);
     }
 
-    ftruncate(fd, number_of_pages * sizeof(struct PTE) * 1000);
-    pagetable = mmap(NULL, number_of_pages * sizeof(struct PTE) * 1000, 0x1 | 0x2, 0x01, fd, 0);
-    if (pagetable == MAP_FAILED) {
+    ftruncate(fd, number_of_pages * sizeof(struct PageTableEntry));
+    page_table = mmap(NULL, number_of_pages * sizeof(struct PageTableEntry), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (page_table == MAP_FAILED) {
         perror("mmap");
         close(fd);
         exit(EXIT_FAILURE);
     }
 
     for (int i = 0; i < number_of_pages; i++) {
-        pagetable[i].valid = false;
-        pagetable[i].frame = -1;
-        pagetable[i].dirty = false;
-        pagetable[i].referenced = 0;
+        page_table[i].valid = false;
+        page_table[i].frame = -1;
+        page_table[i].dirty = false;
+        page_table[i].referenced = 0;
     }
 
     printf("-------------------------\n");
     printf("Initialized page table\n");
     for (int i = 0; i < number_of_pages; i++)
         printf("Page %d ---> valid=%d, frame=%d, dirty=%d, referenced=%d\n",
-               i, pagetable[i].valid, pagetable[i].frame, pagetable[i].dirty, pagetable[i].referenced);
+               i, page_table[i].valid, page_table[i].frame, page_table[i].dirty, page_table[i].referenced);
 
     close(fd);
 }
 
 void initialize_disk() {
-    disk = (char **) malloc(number_of_pages * sizeof(char *) * 1000);
+    disk = (char **)malloc(number_of_pages * sizeof(char *));
     static const char charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
     for (int i = 0; i < number_of_pages; i++) {
-        disk[i] = (char *) malloc(PAGE_SIZE * 1000);
+        disk[i] = (char *)malloc(PAGE_SIZE);
 
         for (int j = 0; j < PAGE_SIZE - 1; j++) {
             int index = rand() % (sizeof(charset) - 1);
@@ -244,19 +236,17 @@ void initialize_disk() {
     printf("Initialized disk\nDisk array\n");
     for (int i = 0; i < number_of_pages; i++)
         printf("Disk %d ---> %s\n", i, disk[i]);
-
 }
 
 void initialize_memory() {
-    memory = (char **) malloc(number_of_frames * sizeof(char *) * 1000);
+    memory = (char **)malloc(number_of_frames * sizeof(char *));
+    frames = (int *)malloc(number_of_frames * sizeof(int));
 
     for (int i = 0; i < number_of_frames; i++) {
-        memory[i] = (char *) malloc(PAGE_SIZE * 1000);
+        memory[i] = (char *)malloc(PAGE_SIZE);
         memset(memory[i], 0, PAGE_SIZE);
+        frames[i] = 0;
     }
-
-    frames = (int *) malloc(number_of_frames * sizeof(int) * 1000);
-    for (int i = 0; i < number_of_frames; i++) frames[i] = 0;
 
     printf("-------------------------\n");
     printf("Initialized RAM\nRAM array\n");
@@ -264,13 +254,12 @@ void initialize_memory() {
         printf("RAM %d ---> %s\n", i, memory[i]);
 }
 
-
 void cleanup() {
     for (int i = 0; i < number_of_pages; i++) free(disk[i]);
     free(disk);
     for (int i = 0; i < number_of_frames; i++) free(memory[i]);
     free(memory);
-    munmap(pagetable, number_of_pages * sizeof(struct PTE));
+    munmap(page_table, number_of_pages * sizeof(struct PageTableEntry));
 
     printf("Total disk accesses: %d\n", accesses_count);
     exit(EXIT_SUCCESS);
@@ -305,5 +294,7 @@ int main(int argc, char *argv[]) {
     signal(SIGUSR1, sigusr1_handler);
     signal(SIGCONT, sigcont_handler);
 
-    for (;;) pause();
+    while (1) {
+        pause();
+    }
 }
