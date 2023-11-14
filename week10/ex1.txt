@@ -1,0 +1,49 @@
+When modifying myfile11.txt, monitor will print the following output:
+File/directory opened: myfile11.txt
+File/Directory: /home/sshk/CLionProjects/os_practice/week10/dir/myfile11.txt
+Size: 59 bytes, Blocks: 8, IO Block: 4096
+Device: 66312, Inode: 264796, Links: 2
+Access: 100664
+Access: Tue Nov 14 23:39:20 2023
+Modify: Tue Nov 14 23:39:20 2023
+Change: Tue Nov 14 23:39:20 2023
+--------------
+File modified: myfile11.txt
+File/Directory: /home/sshk/CLionProjects/os_practice/week10/dir/myfile11.txt
+Size: 59 bytes, Blocks: 8, IO Block: 4096
+Device: 66312, Inode: 264796, Links: 2
+Access: 100664
+Access: Tue Nov 14 23:39:20 2023
+Modify: Tue Nov 14 23:39:20 2023
+Change: Tue Nov 14 23:39:20 2023
+--------------
+That means that the file was opened and modified.
+
+When creating myfile13.txt as a symbolic link to /tmp/myfile1.txt, monitor will print the following output:
+File/directory created: myfile13.txt
+File/Directory: /home/sshk/CLionProjects/os_practice/week10/dir/myfile13.txt
+Size: 59 bytes, Blocks: 8, IO Block: 4096
+Device: 66312, Inode: 264796, Links: 2
+Access: 100664
+Access: Tue Nov 14 23:39:20 2023
+Modify: Tue Nov 14 23:39:20 2023
+Change: Tue Nov 14 23:39:20 2023
+--------------
+That means that the file was created, but monitor did not display anything when the /tmp/myfile1.txt was modified.
+That means, there were no changes in the watched directory.
+
+After removing all duplicated of hard links for myfile11.txt, ex1.c will print the following output:
+Hard links to myfile11.txt (inode 264796):
+Inode: 264796, Path: /home/sshk/CLionProjects/os_practice/week10/dir/myfile11.txt
+Content: Hello world. Modify myfile11.txt.
+File/Directory: /home/sshk/CLionProjects/os_practice/week10/dir/myfile11.txt
+Size: 59 bytes, Blocks: 8, IO Block: 4096
+Device: 66312, Inode: 264796, Links: 2
+Access: 100664
+Access: Tue Nov 14 23:39:20 2023
+Modify: Tue Nov 14 23:39:20 2023
+Change: Tue Nov 14 23:39:20 2023
+--------------
+That means, that there is only one hard link to myfile11.txt and it is the file itself.
+Also, number of links to myfile11.txt is 2, because there is also a symbolic link to it.
+
