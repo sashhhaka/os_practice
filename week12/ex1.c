@@ -27,8 +27,8 @@ void print_buffer(unsigned short *buffer) {
     printf("\n");
 }
 
+// make the last instance of key in the buffer 0
 void remove_key(unsigned short *buffer, unsigned short key) {
-    // make the last instance of key in the buffer 0
     for (int i = BUFF_SIZE - 1; i >= 0; i--) {
         if (buffer[i] == key) {
             buffer[i] = 0;
@@ -37,6 +37,7 @@ void remove_key(unsigned short *buffer, unsigned short key) {
     }
 }
 
+// custom shortcut function
 void frog(FILE *fptr) {
     printf("  @..@ \n");
     printf(" (----)\n");
