@@ -8,7 +8,6 @@
 #define BUFF_SIZE 6
 
 
-
 // function to determine if a string is a substring of a second string
 int is_substring(unsigned short str1[], int n, unsigned short str2[]) {
     // if the first string is a suffix in str2, it is a substring
@@ -19,23 +18,35 @@ int is_substring(unsigned short str1[], int n, unsigned short str2[]) {
 }
 
 // function to move the buffer one cell to the left
-void move_buffer(unsigned short* buffer) {
-    for (int i = 0; i < BUFF_SIZE-1; i++) buffer[i] = buffer[i + 1];
+void move_buffer(unsigned short *buffer) {
+    for (int i = 0; i < BUFF_SIZE - 1; i++) buffer[i] = buffer[i + 1];
 }
 
-void print_buffer(unsigned short* buffer) {
+void print_buffer(unsigned short *buffer) {
     for (int i = 0; i < BUFF_SIZE; i++) printf("%d ", buffer[i]);
     printf("\n");
 }
 
-void remove_key(unsigned short* buffer, unsigned short key) {
+void remove_key(unsigned short *buffer, unsigned short key) {
     // make the last instance of key in the buffer 0
-    for (int i = BUFF_SIZE-1; i >= 0; i--) {
+    for (int i = BUFF_SIZE - 1; i >= 0; i--) {
         if (buffer[i] == key) {
             buffer[i] = 0;
             break;
         }
     }
+}
+
+void frog(FILE *fptr) {
+    printf("  @..@ \n");
+    printf(" (----)\n");
+    printf("( >__< )\n");
+    printf("^^ ~~ ^^ \n");
+    fprintf(fptr, "  @..@ \n");
+    fprintf(fptr, " (----)\n");
+    fprintf(fptr, "( >__< )\n");
+    fprintf(fptr, "^^ ~~ ^^ \n");
+
 }
 
 int main() {
@@ -46,20 +57,25 @@ int main() {
     }
 
     // open file for writing the input into
-    int fd_out = open("ex1.txt", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-    if (fd_out < 0) {
+    FILE *fptr = fopen("ex1.txt", "w");
+    if (fptr == NULL) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
+    system("chmod 777 ex1.txt");
 
     struct input_event ev;
+
+    // initialize the buffer
     unsigned short buffer[BUFF_SIZE];
-    unsigned short shortcut_terminate[2] = {KEY_E, KEY_X};
-    unsigned short custom_shortcut[5] = {KEY_F, KEY_I, KEY_R, KEY_A, KEY_S};
     for (int i = 0; i < 6; i++) buffer[i] = 0;
-    int i = 0;
+    // initialize shortcuts
+    unsigned short shortcut_terminate[2] = {KEY_E, KEY_X};
+    unsigned short passed_shortcut[2] = {KEY_P, KEY_E};
+    unsigned short shortcut_cap[3] = {KEY_C, KEY_A, KEY_P};
+    unsigned short custom_shortcut[4] = {KEY_F, KEY_R, KEY_O, KEY_G};
+
     while (1) {
-        i++;
         read(fd, &ev, sizeof(struct input_event));
         if (ev.type == EV_KEY && (ev.value == 0 || ev.value == 1 || ev.value == 2)) {
             char *type;
@@ -67,35 +83,44 @@ int main() {
             else if (ev.value == 1) type = "PRESSED";
             else type = "REPEATED";
             printf("%s 0x%04x (%d)\n", type, ev.code, ev.code);
-            // also append to the file
+
+            fprintf(fptr, "%s 0x%04x (%d)\n", type, ev.code, ev.code);
 
 
             if (ev.value == 1) {
                 // add the new key to the buffer
                 move_buffer(buffer);
-                buffer[BUFF_SIZE-1] = ev.code;
+                buffer[BUFF_SIZE - 1] = ev.code;
                 // check if the buffer contains the shortcut
-                // print buffer
-//                print_buffer(buffer, 6);
-//                print_buffer(shortcut_terminate, sizeof(shortcut_terminate)/sizeof(shortcut_terminate[0]));
-//                print_buffer(custom_shortcut, sizeof(custom_shortcut)/sizeof(custom_shortcut[0]));
                 if (is_substring(shortcut_terminate,
-                                 sizeof(shortcut_terminate)/sizeof(shortcut_terminate[0]),buffer)) {
+                                 sizeof(shortcut_terminate) / sizeof(shortcut_terminate[0]), buffer)) {
                     printf("Terminating\n");
-                    write(fd_out, "Terminated\n", sizeof("Terminated\n"));
+                    fprintf(fptr, "Terminating\n");
                     close(fd);
                     exit(EXIT_SUCCESS);
                 }
-                if (is_substring(custom_shortcut,
-                                 sizeof(custom_shortcut)/sizeof(custom_shortcut[0]), buffer)) {
-                    printf("Custom shortcut\n");
-                    write(fd_out, "Custom shortcut\n", sizeof("Custom shortcut\n"));
+
+                if (is_substring(passed_shortcut,
+                                 sizeof(passed_shortcut) / sizeof(passed_shortcut[0]), buffer)) {
+                    printf("I passed the Exam!\n");
+                    fprintf(fptr, "I passed the Exam!\n");
                 }
+
+                if (is_substring(shortcut_cap,
+                                 sizeof(shortcut_cap) / sizeof(shortcut_cap[0]), buffer)) {
+                    printf("Get some cappuccino!\n");
+                    fprintf(fptr, "Get some cappuccino!\n");
+                }
+                if (is_substring(custom_shortcut,
+                                 sizeof(custom_shortcut) / sizeof(custom_shortcut[0]), buffer)) {
+                    frog(fptr);
+
+                }
+
             } else if (ev.value == 0) {
-                // remove the key from the buffer
+                // remove the last instance of key from the buffer
                 remove_key(buffer, ev.code);
             }
-
         }
     }
 }
